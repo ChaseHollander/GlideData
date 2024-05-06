@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fetch Glide Data</title>
+    <style>
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+
+        th, td {
+            border: 1px solid black;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            position: relative;
+        }
+
+        .sort-arrow {
+            position: absolute;
+            top: 0;
+            right: 8px;
+            cursor: pointer;
+        }
+
+        .sort-arrow::after {
+            content: '▼';
+        }
+
+        .sort-arrow.asc::after {
+            content: '▲';
+        }
+    </style>
+</head>
+<body>
+    <div>
+        <label>
+            <input type="checkbox" id="report1-checkbox" onchange="filterData()"> Report 1
+        </label>
+        <label>
+            <input type="checkbox" id="report2-checkbox" onchange="filterData()"> Report 2
+        </label>
+    </div>
+
+    <div id="table1-container"></div>
+    <div id="table2-container"></div>
+    <div id="table3-container"></div>
+    <div id="table4-container"></div>
+
+    <script>
+        let isSortAscending = false;
+
+        function filterData() {
+            const report1Checkbox = document.getElementById('report1-checkbox');
+            const report2Checkbox = document.getElementById('report2-checkbox');
+            const table1Container = document.getElementById('table1-container');
+            const table2Container = document.getElementById('table2-container');
+            const table3Container = document.getElementById('table3-container');
+            const table4Container = document.getElementById('table4-container');
+            const activityYearFilter = document.getElementById('activity-year-filter');
+
+            const table1Rows = Array.from(document.querySelectorAll('#table1-container > div'));
+            const table2Rows = Array.from(document.querySelectorAll('#table2-container > table > tbody > tr'));
+            const table3Rows = Array.from(document.querySelectorAll('#table3-container > table > tbody > tr'));
+
+            table1Rows.forEach(row => {
+                const reportId = row.querySelector('p:first-child').innerText.split(':')[1].trim();
+                row.style.display = (reportId === 'report1' && report1Checkbox.checked) || (reportId === 'report2' && report2Checkbox.checked) || (!report1Checkbox.checked && !report2Checkbox.checked) ? 'block' : 'none';
+            });
+
+            table2Rows.forEach(row => {
+                const reportId = row.cells[0].innerText.trim();
+                row.style.display = (reportId === 'report1' && report1Checkbox.checked) || (reportId === 'report2' && report2Checkbox.checked) || (!report1Checkbox.checked && !report2Checkbox.checked) ? 'table-row' : 'none';
+            });
+
+            table3Rows.forEach(row => {
+                const reportId = row.cells[0].innerText.trim();
+                row.style.display = (reportId === 'report1' && report1Checkbox.checked) || (reportId === 'report2' && report2Checkbox.checked) || (!report1Checkbox.checked && !report2Checkbox.checked) ? 'table-row' : 'none';
+            });
+
+            table4Container.style.display = (!report1Checkbox.checked && !report2Checkbox.checked) ? 'block' : 'none';
+            activityYearFilter.style.display = (report1Checkbox.checked || report2Checkbox.checked) ? 'block' : 'none';
+        }
+
+        // Define the URL for the Glide API endpoint
+        const url = 'https://api.glideapp.io/api/function/queryTables';
+
+        // Make a POST request to the Glide API endpoint
+        fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer aca65413-747f-4840-98c0-4a113595a9d7'
+            },
+            body: JSON.stringify({
+                appID: '8mnPdZnUVVI9RSwAcGue',
+                queries: [
+                    { tableName: 'native-table-d4fdcba3-6e57-48f1-a8a8-11350728363e', utc: true },
+                    { tableName: 'native-table-2b6952fe-f74e-4b99-8c93-294ba8830c8e', utc: true },
+                    { tableName: 'native-table-thm1Qab8shVFU4Wo2oIs', utc: true },
+                    { tableName: 'native-table-aaa5f70e-953d-44c3-9ebf-1f664e2f06ba', utc: true }
+                ]
+            })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.json();
+        })
+        .then(data => {
+            function embedContent(url) {
+                if (url && url.includes('quickchart.io')) {
+                    return url.replace('/chart?', '/chart.png?');
+                } else {
+                    return url;
+                }
+            }
+
+            function displayTable1Data(rows) {
+                const table1Container = document.getElementById('table1-container');
+                table1Container.innerHTML = '';
+                table1Container.style.display = 'block';
+                rows.forEach(row => {
+                    const rowElement = document.createElement('div');
+                    rowElement.style.display = 'block';
+                    rowElement.innerHTML = `<p>Report ID: ${row.Name}</p>
+                                            <p>Topic ID: ${row.hP0Ee}</p>
+                                            <p>Question ID: ${row.VZMyd}</p>
+                                            <p>Topic Name: ${row.jsXDY}</p>
+                                            <p>Question: ${row['181ni']}</p>
+                                            <iframe src="${embedContent(row.EYhrq)}" style="width:50%;height:250px;"></iframe>`;
+                    table1Container.appendChild(rowElement);
+                });
+            }
+
+            function displayTable2Data(rows) {
+                const table2Container = document.getElementById('table2-container');
+                table2Container.innerHTML = '';
+                table2Container.style.display = 'block';
+                const table = document.createElement('table');
+                table.id = 'table2';
+                const thead = document.createElement('thead');
+                const tbody = document.createElement('tbody');
+
+                // Create table headers
+                const headers = ['Topic ID', 'Company ID', 'Activity Year', 'Activity Status', 'Activity Name'];
+                const headerRow = document.createElement('tr');
+                headers.forEach(header => {
+                    const th = document.createElement('th');
+                    th.textContent = header;
+                    if (header === 'Activity Year') {
+                        th.innerHTML += '<span class="sort-arrow" onclick="sortTable()">▼</span>';
+                    }
+                    headerRow.appendChild(th);
+                });
+                thead.appendChild(headerRow);
+                table.appendChild(thead);
+
+                // Create table rows
+                rows.forEach(row => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `<td>${row.Name}</td>
+                                    <td>${row.BXnWQ}</td>
+                                    <td>${row['4xN7L']}</td>
+                                    <td>${row.w3OAt}</td>
+                                    <td>${row['2w2gP']}</td>`;
+                    tbody.appendChild(tr);
+                });
+                table.appendChild(tbody);
+                table2Container.appendChild(table);
+            }
+
+            function displayTable3Data(rows) {
+                const table3Container = document.getElementById('table3-container');
+                table3Container.innerHTML = '';
+                table3Container.style.display = 'block';
+                rows.forEach(row => {
+                    const rowElement = document.createElement('div');
+                    rowElement.style.display = 'block';
+                    rowElement.innerHTML = `<p>Report ID: ${row.Name}</p>
+                                            <p>Company ID: ${row.lsTUz}</p>`;
+                    table3Container.appendChild(rowElement);
+                });
+            }
+
+
+            function displayTable4Data(rows) {
+                const table4Container = document.getElementById('table4-container');
+                table4Container.innerHTML = '';
+                table4Container.style.display = 'block';
+                rows.forEach(row => {
+                    const rowElement = document.createElement('div');
+                    rowElement.style.display = 'block';
+                    rowElement.innerHTML = `<p>Topic ID: ${row['7FYBF']}</p>
+                                            <p>Indicator ID: ${row.Name}</p>
+                                            <p>Company ID: ${row.ZKUma}</p>
+                                            <iframe src="${embedContent(row.bmsuO)}" style="width:60%;height:300px;"></iframe>`;
+                    table4Container.appendChild(rowElement);
+                });
+            }
+
+            displayTable1Data(data[0].rows);
+            displayTable2Data(data[1].rows);
+            displayTable3Data(data[2].rows);
+            displayTable4Data(data[3].rows);
+        })
+        .catch(error => {
+            console.error('Error fetching data:', error);
+        });
+
+        function sortTable() {
+            isSortAscending = !isSortAscending;
+            const table = document.getElementById('table2');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+
+            rows.sort((a, b) => {
+                const yearA = parseInt(a.cells[2].innerText);
+                const yearB = parseInt(b.cells[2].innerText);
+
+                if (isSortAscending) {
+                    return yearA - yearB;
+                } else {
+                    return yearB - yearA;
+                }
+            });
+
+            rows.forEach(row => {
+                tbody.appendChild(row);
+            });
+
+            const sortArrow = document.querySelector('.sort-arrow');
+            sortArrow.classList.toggle('asc', isSortAscending);
+        }
+    </script>
+</body>
+</html>
